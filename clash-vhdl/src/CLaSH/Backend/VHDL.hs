@@ -491,7 +491,7 @@ expr_ _ (Identifier id_ (Just (Indexed (ty@(Product _ _),_,fI)))) = text id_ <> 
 expr_ _ (Identifier id_ (Just (Indexed ((Vector _ _),1,1)))) = text id_ <> parens (int 0)
 expr_ _ (Identifier id_ (Just (Indexed ((Vector n _),1,2)))) = text id_ <> parens (int 1 <+> "to" <+> int (n-1))
 
-expr_ _ (Identifier id_ (Just (Indexed ((BitVector n),1,lane)))) = text id_ <> parens (int lane)
+expr_ _ (Identifier id_ (Just (Indexed ((BitVector _),1,lane)))) = text id_ <> parens (int lane)
 
 
 -- This is a HACK for CLaSH.Driver.TopWrapper.mkOutput
