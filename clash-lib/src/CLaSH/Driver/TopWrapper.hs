@@ -253,8 +253,8 @@ clockPorts inp (Just suffix) outp = (inp' ++ outp',clks)
     outp' = map (pack *** stringToVar) outp
     clks  = map snd outp
     differential :: (String,Expr) -> [(Identifier,Expr)]
-    differential (name, expr) = [ (pack (suffixed ++ "_n"), expr {-++ "(0)"-})
-                                , (pack (suffixed ++ "_p"), expr)
+    differential (name, expr@(Identifier a Nothing)) = [ (pack (suffixed ++ "_n"), Identifier (pack (unpack a ++ "(0)"))  Nothing) -- Identifier a (Just (Indexed (BitVector 2,0,0))))
+                                , (pack (suffixed ++ "_p"), Identifier (pack (unpack a ++ "(1)"))  Nothing)
                                 ]
       where suffixed = name ++ "_" ++ suffix
 
