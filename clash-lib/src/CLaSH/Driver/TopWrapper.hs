@@ -250,14 +250,13 @@ clockPorts inp Nothing outp = (inp' ++ outp',clks)
 clockPorts inp (Just suffix) outp = (inp' ++ outp',clks)
   where
     inp'  = maybe [] (differential . (id *** stringToVar)) inp
-    outp' = map (pack *** stringToVar) outp
-    clks  = map snd outp
-    differential :: (String,Expr) -> [(Identifier,Expr)]
-    differential (name, Identifier a Nothing) = [ (pack (suffixed "_n"), indexed 0)
-                                                , (pack (suffixed "_p"), indexed 1)
+    (outp',clks) = clockPorts Nothing Nothing outp
+    differential (name, Identifier a Nothing) = [ (suffixed 'n', indexed 0)
+                                                , (suffixed 'p', indexed 1)
                                                 ]
-      where suffixed polarity = name ++ "_" ++ suffix ++ polarity
+      where suffixed polarity = pack (name ++ "_" ++ suffix ++ '_' : [polarity])
             indexed i = Identifier a (Just (Indexed (BitVector 2,1,i)))
+    differential (name, expr) = [(pack name, expr)]
 
 -- | Generate resets
 mkResets :: PrimMap
