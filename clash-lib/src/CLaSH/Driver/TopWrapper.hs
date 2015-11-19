@@ -242,23 +242,11 @@ mkClockDecl s = NetDecl (pack s) (Clock (pack name) (read rate))
 -- | Create a single clock path
 clockPorts :: [(String,String)] -> [(String,String)]
            -> ([(Identifier,Expr)],[String])
-clockPorts inp outp = (inp' ++ outp',clks)
+clockPorts inp outp = (ports,clks)
   where
-    inp'  = map (pack *** stringToVar) inp
-    outp' = map (pack *** stringToVar) outp
+    ports = map (pack *** stringToVar) (inp ++ outp)
     clks  = map snd outp
-{-
-clockPorts inp (Just suffix) outp = (inp' ++ outp',clks)
-  where
-    inp'  = maybe [] (differential . (id *** stringToVar)) inp
-    (outp',clks) = clockPorts Nothing Nothing outp
-    differential (name, Identifier a Nothing) = [ (suffixed 'n', indexed 0)
-                                                , (suffixed 'p', indexed 1)
-                                                ]
-      where suffixed polarity = pack (name ++ "_" ++ suffix ++ '_' : [polarity])
-            indexed i = Identifier a (Just (Indexed (BitVector 2,1,i)))
-    differential (name, expr) = [(pack name, expr)]
--}
+
 
 -- | Generate resets
 mkResets :: PrimMap
