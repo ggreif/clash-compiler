@@ -224,7 +224,7 @@ mkClock (ClockSource {..}) = (clkDecls ++ [lockedDecl,instDecl],(lockedName,clks
     c_nameT      = pack c_name
     lockedName   = append c_nameT "_locked"
     lockedDecl   = NetDecl lockedName (Reset lockedName 0)
-    (ports,clks) = clockPorts c_inp c_diff c_outp
+    (ports,clks) = clockPorts c_inp c_outp
     clkDecls     = map mkClockDecl clks
     instDecl     = InstDecl c_nameT (append c_nameT "_inst")
                  $ concat [ ports
@@ -240,13 +240,14 @@ mkClockDecl s = NetDecl (pack s) (Clock (pack name) (read rate))
 
 
 -- | Create a single clock path
-clockPorts :: Maybe (String,String) -> Maybe String -> [(String,String)]
+clockPorts :: [(String,String)] -> [(String,String)]
            -> ([(Identifier,Expr)],[String])
-clockPorts inp Nothing outp = (inp' ++ outp',clks)
+clockPorts inp outp = (inp' ++ outp',clks)
   where
-    inp'  = maybe [] ((:[]) . (pack *** stringToVar)) inp
+    inp'  = map (pack *** stringToVar) inp
     outp' = map (pack *** stringToVar) outp
     clks  = map snd outp
+{-
 clockPorts inp (Just suffix) outp = (inp' ++ outp',clks)
   where
     inp'  = maybe [] (differential . (id *** stringToVar)) inp
@@ -257,6 +258,7 @@ clockPorts inp (Just suffix) outp = (inp' ++ outp',clks)
       where suffixed polarity = pack (name ++ "_" ++ suffix ++ '_' : [polarity])
             indexed i = Identifier a (Just (Indexed (BitVector 2,1,i)))
     differential (name, expr) = [(pack name, expr)]
+-}
 
 -- | Generate resets
 mkResets :: PrimMap
