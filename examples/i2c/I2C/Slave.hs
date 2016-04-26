@@ -3,7 +3,7 @@
 -- Restrictions:
 -- - 7bit address space
 -- - missing debouncer
-
+-- - one baud rate only
 
 -- * Preliminaries
 
@@ -34,9 +34,13 @@ pattern DOWN = (O, True)
 
 pattern START = (DOWN, HIGH)
 pattern STOP = (UP, HIGH)
+pattern ACK = (UP, LOW)
 
 --                       +-- SDA      +--- SCL
 --                       |    +- SDA' |    +- SCL'
 --                       v    v       v    v
 flank :: Unsigned 3 -> ((Bit, Bool), (Bit, Bool)) -> (Unsigned 3, Bool, Maybe Bit, Bool)
-flank 7 ((sda, sda'), (scl, scl')) = (0, True, Nothing, False)
+flank 7 START = (0, True, Nothing, False)
+flank 7 STOP = (0, False, Nothing, True)
+-- ACK??
+flank n ((sda, _), UP) = (n+1, False, Just sda, False)
