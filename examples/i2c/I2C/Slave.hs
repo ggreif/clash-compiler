@@ -44,16 +44,20 @@ pattern ACK = (UP, LOW)
 
 
 
---                       +-- SDA      +--- SCL
---                       |    +- SDA' |    +- SCL'
---                       v    v       v    v
-flank :: Unsigned 3 -> ((Bit, Bool), (Bit, Bool)) -> (Unsigned 3, Bool, Maybe Bit, Bool)
-flank 7 START = (0, True, Nothing, False)
-flank 7 STOP = (0, False, Nothing, True)
-flank 7 ACK = (0, False, Nothing, False)
-flank n ((sda, _), UP) = (n+1, False, Just sda, False)
+--                              +-- SDA      +--- SCL
+--                              |    +- SDA' |    +- SCL'
+--                              v    v       v    v
+flank :: Maybe (Unsigned 3) -> ((Bit, Bool), (Bit, Bool)) -> (Unsigned 3, Bool, Maybe Bit, Bool)
+flank Nothing START = (0, True, Nothing, False)
+flank Nothing STOP = (0, False, Nothing, True)
+flank Nothing ACK = (0, False, Nothing, False)
+flank (Just n) ((sda, _), UP) = (n+1, False, Just sda, False)
+flank _ _ = (0, False, Nothing, True) -- STOP-like
 
+-- * Transfer functions for derivatives
 
+derive :: Eq a => a -> a -> (a, (a, Bool))
+derive a0 a = (a, (a, a /= a0))
 
 -- * Tests
 
