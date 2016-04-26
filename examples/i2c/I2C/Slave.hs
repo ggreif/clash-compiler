@@ -62,9 +62,8 @@ derive a0 a = (a, (a, a /= a0))
 -- * Isolate flanks of the two wires
 
 sda'scl' :: Signal Bit -> Signal Bit -> Signal ((Bit, Bool), (Bit, Bool))
-sda'scl' sda scl = bundle (sda', scl')
-  where sda' = mealy derive O sda
-        scl' = mealy derive O scl
+sda'scl' sda scl = bundle (derived sda, derived scl)
+  where derived = mealy derive O
 
 -- * Tests
 
