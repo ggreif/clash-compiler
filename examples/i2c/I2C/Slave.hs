@@ -22,19 +22,27 @@ data State where
 
 -- * Flank detection
 
+-- ** Could this go into the prelude?
+
 pattern I <- ((==high) -> True)
   where I = high
 pattern O <- ((==low) -> True)
   where O = low
+
+-- ** Level and derivative
 
 pattern HIGH = (I, False)
 pattern LOW = (O, False)
 pattern UP = (I, True)
 pattern DOWN = (O, True)
 
+-- ** I2C events
+
 pattern START = (DOWN, HIGH)
 pattern STOP = (UP, HIGH)
 pattern ACK = (UP, LOW)
+
+
 
 --                       +-- SDA      +--- SCL
 --                       |    +- SDA' |    +- SCL'
@@ -42,5 +50,13 @@ pattern ACK = (UP, LOW)
 flank :: Unsigned 3 -> ((Bit, Bool), (Bit, Bool)) -> (Unsigned 3, Bool, Maybe Bit, Bool)
 flank 7 START = (0, True, Nothing, False)
 flank 7 STOP = (0, False, Nothing, True)
--- ACK??
+flank 7 ACK = (0, False, Nothing, False)
 flank n ((sda, _), UP) = (n+1, False, Just sda, False)
+
+
+
+-- * Tests
+
+scl8 = moore up (<4) (0 :: Unsigned 3) (pure ())
+  where up 7 () = 0
+        up n () = n + 1
