@@ -59,6 +59,13 @@ flank _ _ = (0, False, Nothing, True) -- STOP-like
 derive :: Eq a => a -> a -> (a, (a, Bool))
 derive a0 a = (a, (a, a /= a0))
 
+-- * Isolate flanks of the two wires
+
+sda'scl' :: Signal Bit -> Signal Bit -> Signal ((Bit, Bool), (Bit, Bool))
+sda'scl' sda scl = bundle (sda', scl')
+  where sda' = mealy derive O sda
+        scl' = mealy derive O scl
+
 -- * Tests
 
 scl8 = moore up (<4) (0 :: Unsigned 3) (pure ())
