@@ -36,6 +36,7 @@ pattern START = (DOWN, HIGH)
 pattern STOP = (UP, HIGH)
 
 --                       +-- SDA      +--- SCL
---                       v            v
+--                       |    +- SDA' |    +- SCL'
+--                       v    v       v    v
 flank :: Unsigned 3 -> ((Bit, Bool), (Bit, Bool)) -> (Unsigned 3, Bool, Maybe Bit, Bool)
 flank 7 ((sda, sda'), (scl, scl')) = (0, True, Nothing, False)
