@@ -54,7 +54,7 @@ flank Nothing ACK = (0, False, Nothing, False)
 flank (Just n) ((sda, _), UP) = (n+1, False, Just sda, False)
 flank _ _ = (0, False, Nothing, True) -- STOP-like
 
--- * Transfer functions for derivatives
+-- * Transfer function for derivatives
 
 derive :: Eq a => a -> a -> (a, (a, Bool))
 derive a0 a = (a, (a, a /= a0))
@@ -63,10 +63,25 @@ derive a0 a = (a, (a, a /= a0))
 
 sda'scl' :: Signal Bit -> Signal Bit -> Signal ((Bit, Bool), (Bit, Bool))
 sda'scl' sda scl = bundle (derived sda, derived scl)
-  where derived = mealy derive O
+  where derived = mealy derive I
+
+-- * Transfer function for the protocol
+
+protocol :: state -> ((Bit, Bool), (Bit, Bool)) -> (state, Bool)
+protocol = undefined
+
 
 -- * Tests
 
 scl8 = moore up (<4) (0 :: Unsigned 3) (pure ())
   where up 7 () = 0
         up n () = n + 1
+
+
+-- * The complete machine
+
+-- Now it's time to connect the pieces.
+-- The output is True: generate ack
+
+i2c :: Signal Bit -> Signal Bit -> Signal Bool
+i2c sda scl = mealy protocol 0 (sda'scl' sda scl)
