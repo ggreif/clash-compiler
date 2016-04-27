@@ -7,7 +7,7 @@
 
 -- * Preliminaries
 
-{-# LANGUAGE GADTSyntax, PatternSynonyms, ViewPatterns #-}
+{-# LANGUAGE GADTSyntax, PatternSynonyms, ViewPatterns, FlexibleInstances #-}
 
 module Slave where
 
@@ -71,7 +71,11 @@ class I2C state where
   protocol :: state -> ((Bit, Bool), (Bit, Bool)) -> (state, Bool)
 
 
--- protocol = undefined
+-- ** Some simple implementations
+
+instance I2C (Unsigned 8) where
+  protocol byte s = (byte, {- cnt==7 && -} not start && not stop)
+    where (cnt, start, bit, stop) = flank Nothing s
 
 
 -- * Tests
