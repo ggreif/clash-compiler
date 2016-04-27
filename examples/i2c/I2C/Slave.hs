@@ -67,8 +67,11 @@ sda'scl' sda scl = bundle (derived sda, derived scl)
 
 -- * Transfer function for the protocol
 
-protocol :: state -> ((Bit, Bool), (Bit, Bool)) -> (state, Bool)
-protocol = undefined
+class I2C state where
+  protocol :: state -> ((Bit, Bool), (Bit, Bool)) -> (state, Bool)
+
+
+-- protocol = undefined
 
 
 -- * Tests
@@ -83,5 +86,5 @@ scl8 = moore up (<4) (0 :: Unsigned 3) (pure ())
 -- Now it's time to connect the pieces.
 -- The output is True: generate ack
 
-i2c :: Signal Bit -> Signal Bit -> Signal Bool
-i2c sda scl = mealy protocol 0 (sda'scl' sda scl)
+i2c :: I2C state => state -> Signal Bit -> Signal Bit -> Signal Bool
+i2c init sda scl = mealy protocol init (sda'scl' sda scl)
