@@ -70,6 +70,16 @@ instance I2C (Unsigned 8) where
   protocol byte s = (byte, {- cnt==7 && -} not start && not stop)
     where (cnt, start, bit, stop) = flank Nothing s
 
+-- ** State diagram for byte transfers
+
+data Transfer = Wait
+              | Read (Unsigned 7) | Write (Unsigned 7)
+              | Receive (Unsigned 8) | Send (Unsigned 8)
+
+-- state transitions:
+-- Wait -> Write -> Receive* -> Wait
+-- Wait -> Read -> Send* -> Wait
+
 
 -- * Tests
 
