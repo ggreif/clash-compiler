@@ -40,12 +40,12 @@ pattern ACK = (UP, LOW)
 --                              +-- SDA      +--- SCL
 --                              |    +- SDA' |    +- SCL'
 --                              v    v       v    v
-flank :: Maybe (Unsigned 3) -> ((Bit, Bool), (Bit, Bool)) -> (Unsigned 3, Bool, Maybe Bit, Bool)
-flank Nothing START = (0, True, Nothing, False)
-flank Nothing STOP = (0, False, Nothing, True)
-flank Nothing ACK = (0, False, Nothing, False)
-flank (Just n) ((sda, _), UP) = (n+1, False, Just sda, False)
-flank _ _ = (0, False, Nothing, True) -- STOP-like
+flank :: Maybe (Unsigned 3) -> ((Bit, Bool), (Bit, Bool)) -> (Maybe (Unsigned 3), Bool, Maybe Bit, Bool)
+flank Nothing START = (Just 0, True, Nothing, False)
+flank Nothing STOP = (Nothing, False, Nothing, True)
+flank Nothing ACK = (Just 0, False, Nothing, False)
+flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
+flank _ _ = (Nothing, False, Nothing, True) -- STOP-like
 
 -- * Transfer function for derivatives
 
@@ -79,6 +79,16 @@ data Transfer = Wait
 -- state transitions:
 -- Wait -> Write -> Receive* -> Wait
 -- Wait -> Read -> Send* -> Wait
+
+instance I2C Transfer where
+  protocol tr s = case (tr, cnt, bit) of
+                    (Wait, Just 0, Nothing) -> (Read 0, ack)
+                    (Read n, Just 6, Just 0) -> (Write n, ack)
+                    (Read n, Just 7, Just 0) -> (Read n, ack)
+                    (Read n, Just _, Just b) -> (Read $ truncateB $ bitCoerce (n,b), ack) -- shift!
+    where (cnt, start, bit, stop) = flank Nothing s
+          ack = not start && not stop && byte
+          byte = case cnt of Just 7 -> True; _ -> False
 
 
 -- * Tests
