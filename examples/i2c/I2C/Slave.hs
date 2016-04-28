@@ -22,19 +22,12 @@ data State where
 
 -- * Flank detection
 
--- ** Could this go into the prelude?
-
-pattern I <- ((==high) -> True)
-  where I = high
-pattern O <- ((==low) -> True)
-  where O = low
-
 -- ** Level and derivative
 
-pattern HIGH = (I, False)
-pattern LOW = (O, False)
-pattern UP = (I, True)
-pattern DOWN = (O, True)
+pattern HIGH = (1, False)
+pattern LOW = (0, False)
+pattern UP = (1, True)
+pattern DOWN = (0, True)
 
 -- ** I2C events
 
@@ -63,7 +56,7 @@ derive a0 a = (a, (a, a /= a0))
 
 sda'scl' :: Signal Bit -> Signal Bit -> Signal ((Bit, Bool), (Bit, Bool))
 sda'scl' sda scl = bundle (derived sda, derived scl)
-  where derived = mealy derive I
+  where derived = mealy derive 1
 
 -- * Transfer function for the protocol
 
