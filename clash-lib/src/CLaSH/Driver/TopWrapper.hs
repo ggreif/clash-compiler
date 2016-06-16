@@ -250,6 +250,7 @@ clockPorts inp outp = (ports,clks)
     ports = map (pack *** stringToVar) (inp ++ outp)
     clks  = map snd outp
 
+
 -- | Generate resets
 mkResets :: PrimMap BlackBoxTemplate
          -> [(Identifier,HWType)]

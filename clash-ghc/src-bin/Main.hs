@@ -1,4 +1,4 @@
-{-# LANGUAGE CPP, NondecreasingIndentation, TupleSections #-}
+{-# LANGUAGE CPP, NondecreasingIndentation, TupleSections, ViewPatterns #-}
 {-# OPTIONS -fno-warn-incomplete-patterns -optc-DNON_POSIX_SOURCE #-}
 
 -----------------------------------------------------------------------------
@@ -29,7 +29,6 @@ import DriverMkDepend   ( doMkDependHS )
 #ifdef GHCI
 import InteractiveUI    ( interactiveUI, ghciWelcomeMsg, defaultGhciSettings )
 #endif
-
 
 -- Various other random stuff that we need
 import Config
@@ -742,7 +741,7 @@ doMake srcs  = do
         haskellish (f,Nothing) =
           looksLikeModuleName f || isHaskellUserSrcFilename f || '.' `notElem` f
         haskellish (_,Just phase) =
-          phase `notElem` [ As True, As False, Cc, Cobjc, Cobjcpp, CmmCpp, Cmm
+          phase `notElem` [ As True, As False, Cc, Cobjc, Cobjcxx, CmmCpp, Cmm
                           , StopLn]
 
     hsc_env <- GHC.getSession
@@ -923,7 +922,7 @@ abiHash strs = do
          let modname = mkModuleName str
          r <- findImportedModule hsc_env modname Nothing
          case r of
-           Found _ m -> return m
+           FoundModule (fr_mod -> m) -> return m
            _error    -> throwGhcException $ CmdLineError $ showSDoc dflags $
                           cannotFindInterface dflags modname r
 
