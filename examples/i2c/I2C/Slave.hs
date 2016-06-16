@@ -123,19 +123,25 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
          -> Signal (Maybe ToSend) -- byte/ack to write
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
-bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
-  where spin (seq, byte) (diffd, wrbyte, ack) = ((seq', byte'), out)
+bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8, Nothing) (bundle (a, b, c))
+  where spin (seq, byte, Nothing) (diffd, wr, ack) = ((seq', byte', send), out)
           where (seq', start, rdbit, stop) = flank seq diffd
-                out = (byte', (start, ackGen seq seq'{-fixme-}, False, stop{-fixme-}), sda)
-                sda = if ackGen seq seq' then 0 else 1 -- HACK
+                out = (byte', (start, sendAck{-fixme-}, False, stop{-fixme-}), sda)
+                sda = if sendAck then 0 else 1 -- HACK
+                sendAck = ackGen seq seq'
                 ackGen (Just 8) Nothing = True
                 ackGen _ _ = False
                 byte' = case (rdbit, seq) of (Nothing, Nothing) -> 0; (Nothing, _) -> byte; (Just b, _) -> unpack (resize (pack (byte, b)))
-
+                send = if sendAck then Just Ack else Nothing
+        spin (Nothing, _, Just Ack) (diffd, _, _) = ((Just 1, 0, Just Ack), (0, (False, False, False, False), 0))
+        spin (Just 1, _, Just Ack) ((_, UP), _, _) = ((Just 0, 0, Just Ack), (0, (False, False, False, False), 0))
+        spin (Just 0, _, Just Ack) ((_, DOWN), _, _) = ((Just 0, 0, Nothing), (0, (False, False, False, False), 0))
+        spin (seq@Just{}, _, Just Ack) (_, _, _) = ((seq, 0, Nothing), (0, (False, False, False, False), 0))
 -- ** Tests
 
-bsTest' = bitSlave diffd (pure Nothing) (pure False)
-  where diffd = sda'scl' (fromList sda') (fromList scl')
+bsTest' = out
+  where out = bitSlave diffd (pure Nothing) (pure False)
+        diffd = sda'scl' (fromList sda') (fromList scl')
         sda' = 1:s:s:s:s:0b10011001::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
          0b01010101::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::
