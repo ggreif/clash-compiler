@@ -116,11 +116,21 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
          -> Signal (Unsigned 8) -- byte to write
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
-bitSlave = liftA3 spin
-  where spin diffd wrbyte ack = out
-          where (seq, start, rdbit, stop) = flank Nothing diffd
+bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
+  where --spin :: Int -> (((Bit, Bool), (Bit, Bool)), Unsigned 8, Bool) -> (Int, (Unsigned 8, (Bool, Bool, Bool, Bool), Bit))
+        spin count (diffd, wrbyte, ack) = (seq, out)
+          where (seq, start, rdbit, stop) = flank count diffd
                 out = (0, (start, False, False, False), sda)
                 sda = 0
+
+-- ** Tests
+
+bsTest' = bitSlave diffd 0 (pure False)
+  where diffd = sda'scl' (fromList sda') (fromList scl')
+        sda' = 1:1:1:1:1:1:1:1:1:1:1:1:[]
+        scl' = 1:1:1:1:0:0:0:0:scl'
+
+bsTest = sampleN 10 bsTest'
 
 -- ** Example: PCA9552
 
