@@ -13,6 +13,8 @@
 module Slave where
 
 import CLaSH.Prelude
+import Debug.Trace (traceShowId)
+import Data.Monoid
 
 -- * Types
 
@@ -46,6 +48,9 @@ flank Nothing START = (Just 0, True, Nothing, False)
 flank Nothing STOP = (Nothing, False, Nothing, True)
 flank Nothing ACK = (Just 0, False, Nothing, False)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
+flank s@Just{} (_, (_, False)) = (s, False, Nothing, False)
+flank s@Just{} (_, DOWN) = (s, False, Nothing, False)
+flank s@Just{} inp = error $ "#########" <> show (s, inp)
 flank _ _ = (Nothing, False, Nothing, True) -- STOP-like
 
 -- * Transfer function for derivatives
@@ -117,9 +122,8 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
 bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
-  where --spin :: Int -> (((Bit, Bool), (Bit, Bool)), Unsigned 8, Bool) -> (Int, (Unsigned 8, (Bool, Bool, Bool, Bool), Bit))
-        spin count (diffd, wrbyte, ack) = (seq, out)
-          where (seq, start, rdbit, stop) = flank count diffd
+  where spin seq (diffd, wrbyte, ack) = (traceShowId seq', out)
+          where (seq', start, rdbit, stop) = flank seq diffd
                 out = (0, (start, False, False, False), sda)
                 sda = 0
 
@@ -127,8 +131,14 @@ bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
 
 bsTest' = bitSlave diffd 0 (pure False)
   where diffd = sda'scl' (fromList sda') (fromList scl')
-        sda' = 1:1:1:1:1:1:1:1:1:1:1:1:[]
+        --sda' = x4 $ 1:0:1:1:1:1:1:1:1:1:1:1:[]
+        sda' = 1:s:s:s:s:s:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:p:p:p: []
+        --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^ 
         scl' = 1:1:1:1:0:0:0:0:scl'
+        x4 [] = []
+        x4 (x:xs) = x:x:x:x:x4 xs
+        s = 0
+        p = 1
 
 bsTest = sampleN 10 bsTest'
 
