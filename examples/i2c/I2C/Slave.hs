@@ -48,9 +48,7 @@ flank Nothing START = (Just 0, True, Nothing, False)
 flank Nothing STOP = (Nothing, False, Nothing, True)
 flank Nothing ACK = (Just 0, False, Nothing, False)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
-flank s@Just{} (_, (_, False)) = (s, False, Nothing, False)
-flank s@Just{} (_, DOWN) = (s, False, Nothing, False)
-flank s@Just{} inp = error $ "#########" <> show (s, inp)
+flank s@Just{} (_, _) = (s, False, Nothing, False)
 flank _ _ = (Nothing, False, Nothing, True) -- STOP-like
 
 -- * Transfer function for derivatives
@@ -132,15 +130,15 @@ bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
 bsTest' = bitSlave diffd 0 (pure False)
   where diffd = sda'scl' (fromList sda') (fromList scl')
         --sda' = x4 $ 1:0:1:1:1:1:1:1:1:1:1:1:[]
-        sda' = 1:s:s:s:s:s:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:p:p:p: []
-        --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^ 
+        sda' = 1:s:s:s:s:s:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:0:0:0:0:0:p:p:p: []
+        --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
         scl' = 1:1:1:1:0:0:0:0:scl'
         x4 [] = []
         x4 (x:xs) = x:x:x:x:x4 xs
         s = 0
         p = 1
 
-bsTest = sampleN 10 bsTest'
+bsTest = sampleN 70 bsTest'
 
 -- ** Example: PCA9552
 
