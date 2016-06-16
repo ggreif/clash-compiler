@@ -120,13 +120,14 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
          -> Signal (Unsigned 8) -- byte to write
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
-bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
-  where spin seq (diffd, wrbyte, ack) = (seq', out)
+bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
+  where spin (seq, byte) (diffd, wrbyte, ack) = ((seq', byte'), out)
           where (seq', start, rdbit, stop) = flank seq diffd
-                out = (0, (start, ack seq seq'{-fixme-}, False, False), sda)
+                out = (byte', (start, ack seq seq'{-fixme-}, False, False), sda)
                 sda = if ack seq seq' then 0 else 1 -- HACK
                 ack (Just 7) Nothing = True
                 ack _ _ = False
+                byte' = case rdbit of Nothing -> byte; Just b -> unpack (resize (pack (byte, b)))
 
 -- ** Tests
 
