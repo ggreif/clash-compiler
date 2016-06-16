@@ -121,10 +121,12 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
 bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
-  where spin seq (diffd, wrbyte, ack) = (traceShowId seq', out)
+  where spin seq (diffd, wrbyte, ack) = (seq', out)
           where (seq', start, rdbit, stop) = flank seq diffd
-                out = (0, (start, {-False-}stop, False, False), sda)
-                sda = 0
+                out = (0, (start, ack seq seq'{-fixme-}, False, False), sda)
+                sda = if ack seq seq' then 0 else 1 -- HACK
+                ack (Just 7) Nothing = True
+                ack _ _ = False
 
 -- ** Tests
 
@@ -138,7 +140,7 @@ bsTest' = bitSlave diffd 0 (pure False)
         s = 0
         p = 1
 
-bsTest = sampleN 70 bsTest'
+bsTest = mapM_ print (sampleN 70 bsTest')
 
 -- ** Example: PCA9552
 
