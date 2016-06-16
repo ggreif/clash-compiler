@@ -116,7 +116,11 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
          -> Signal (Unsigned 8) -- byte to write
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
-bitSlave = undefined
+bitSlave = liftA3 spin
+  where spin diffd wrbyte ack = out
+          where (seq, start, rdbit, stop) = flank Nothing diffd
+                out = (0, (start, False, False, False), sda)
+                sda = 0
 
 -- ** Example: PCA9552
 
