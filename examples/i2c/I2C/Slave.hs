@@ -50,7 +50,7 @@ flank Nothing STOP = (Nothing, False, Nothing, True)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
 flank (Just 8) (_, DOWN) = (Nothing, False, Nothing, False)
 flank s@Just{} (_, _) = (s, False, Nothing, False)
-flank _ _ = (Nothing, False, Nothing, True) -- STOP-like
+flank _ _ = (Nothing, False, Nothing, False) -- STOP-like
 
 -- * Transfer function for derivatives
 
@@ -133,8 +133,9 @@ bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
 
 bsTest' = bitSlave diffd 0 (pure False)
   where diffd = sda'scl' (fromList sda') (fromList scl')
-        sda' = 1:s:s:s:s:s:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:0:0:0:0:0:p:p:p: []
+        sda' = 1:s:s:s:s:1:::::::::::::::0:::::::::::::::0:::::::::::::::1:::::::::::::::1:::::::::::::::0:::::::::::::::0:::::::::::::::1:::::::::::::::0:0:0:0:0:p:p:p: []
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
+        sdA' = 1:s:s:s:s:1:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:0:0:0:0:0:p:p:p: []
         scl' = 1:1:1:1:0:0:0:0:scl'
         x4 [] = []
         x4 (x:xs) = x:x:x:x:x4 xs
@@ -142,6 +143,11 @@ bsTest' = bitSlave diffd 0 (pure False)
         p = 1
 
 bsTest = mapM_ print (sampleN 77 bsTest')
+
+infixr 5 :::::::::::::::
+pattern (:::::::::::::::) :: Bit -> [Bit] -> [Bit]
+pattern b ::::::::::::::: bs <- b : ((b==) -> True) : ((b==) -> True) : ((b==) -> True) : ((b==) -> True) : ((b==) -> True) : ((b==) -> True) : ((b==) -> True) : bs
+  where b ::::::::::::::: bs = b : b : b : b : b : b : b : b : bs
 
 -- ** Example: PCA9552
 
