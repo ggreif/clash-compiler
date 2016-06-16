@@ -1,4 +1,3 @@
-{-# LANGUAGE TupleSections #-}
 -- * A bus-slave implementation
 
 -- Restrictions:
@@ -9,7 +8,7 @@
 
 -- * Preliminaries
 
-{-# LANGUAGE GADTSyntax, PatternSynonyms, ViewPatterns, FlexibleInstances #-}
+{-# LANGUAGE GADTSyntax, PatternSynonyms, ViewPatterns, FlexibleInstances, TupleSections #-}
 
 module Slave where
 
@@ -133,10 +132,10 @@ bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8, Nothing) (bundle (a, b, c
                 ackGen _ _ = False
                 byte' = case (rdbit, seq) of (Nothing, Nothing) -> 0; (Nothing, _) -> byte; (Just b, _) -> unpack (resize (pack (byte, b)))
                 send = if sendAck then Just Ack else Nothing
-        spin (Nothing, _, Just Ack) (diffd, _, _) = ((Just 1, 0, Just Ack), (0, (False, False, False, False), 0))
+        spin (Nothing, _, Just Ack) (_, _, _) = ((Just 1, 0, Just Ack), (0, (False, False, False, False), 0))
         spin (Just 1, _, Just Ack) ((_, UP), _, _) = ((Just 0, 0, Just Ack), (0, (False, False, False, False), 0))
         spin (Just 0, _, Just Ack) ((_, DOWN), _, _) = ((Just 0, 0, Nothing), (0, (False, False, False, False), 0))
-        spin (seq@Just{}, _, Just Ack) (_, _, _) = ((seq, 0, Nothing), (0, (False, False, False, False), 0))
+        spin (seq@Just{}, _, Just Ack) (flanks, _, _) = ((seq, 0, Just Ack), (0, (False, False, False, False), 0))
 -- ** Tests
 
 bsTest' = out
@@ -146,14 +145,14 @@ bsTest' = out
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
          0b01010101::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
-         0b00011100::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::0:0:0:0:0:p:p:p: []
-        --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
+         0b00011100::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::0:0:0:0:0:p:p:p: []
+        --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
         scl' = 1:1:1:1:0:0:0:0:scl'
         s = 0
         p = 1
         a = 1 -- ack await
 
-bsTest = mapM_ print (sampleN 130 bsTest')
+bsTest = mapM_ print (sampleN 232 bsTest')
 
 infixr 5 :::::::::::::::
 --pattern (:::::::::::::::) :: Eq a => a -> [a] -> [a]
