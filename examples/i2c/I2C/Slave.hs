@@ -43,12 +43,12 @@ pattern ACK = (UP, LOW)
 --                              +-- SDA      +--- SCL
 --                              |    +- SDA' |    +- SCL'
 --                              v    v       v    v
-flank :: Maybe (Unsigned 3) -> ((Bit, Bool), (Bit, Bool)) -> (Maybe (Unsigned 3), Bool, Maybe Bit, Bool)
+flank :: Maybe (Unsigned 4) -> ((Bit, Bool), (Bit, Bool)) -> (Maybe (Unsigned 4), Bool, Maybe Bit, Bool)
 flank Nothing START = (Just 0, True, Nothing, False)
 flank Nothing STOP = (Nothing, False, Nothing, True)
 --flank Nothing ACK = (Just 0, False, Nothing, False) -- sense this only when sending (after bit #7)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
-flank (Just 7) (_, DOWN) = (Nothing, False, Nothing, False)
+flank (Just 8) (_, DOWN) = (Nothing, False, Nothing, False)
 flank s@Just{} (_, _) = (s, False, Nothing, False)
 flank _ _ = (Nothing, False, Nothing, True) -- STOP-like
 
@@ -125,7 +125,7 @@ bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
           where (seq', start, rdbit, stop) = flank seq diffd
                 out = (byte', (start, ack seq seq'{-fixme-}, False, False), sda)
                 sda = if ack seq seq' then 0 else 1 -- HACK
-                ack (Just 7) Nothing = True
+                ack (Just 8) Nothing = True
                 ack _ _ = False
                 byte' = case rdbit of Nothing -> byte; Just b -> unpack (resize (pack (byte, b)))
 
@@ -141,7 +141,7 @@ bsTest' = bitSlave diffd 0 (pure False)
         s = 0
         p = 1
 
-bsTest = mapM_ print (sampleN 70 bsTest')
+bsTest = mapM_ print (sampleN 75 bsTest')
 
 -- ** Example: PCA9552
 
