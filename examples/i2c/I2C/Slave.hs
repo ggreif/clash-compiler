@@ -46,8 +46,9 @@ pattern ACK = (UP, LOW)
 flank :: Maybe (Unsigned 3) -> ((Bit, Bool), (Bit, Bool)) -> (Maybe (Unsigned 3), Bool, Maybe Bit, Bool)
 flank Nothing START = (Just 0, True, Nothing, False)
 flank Nothing STOP = (Nothing, False, Nothing, True)
-flank Nothing ACK = (Just 0, False, Nothing, False)
+--flank Nothing ACK = (Just 0, False, Nothing, False) -- sense this only when sending (after bit #7)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
+flank (Just 7) (_, DOWN) = (Nothing, False, Nothing, False)
 flank s@Just{} (_, _) = (s, False, Nothing, False)
 flank _ _ = (Nothing, False, Nothing, True) -- STOP-like
 
@@ -122,14 +123,13 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
 bitSlave a b c = mealy spin Nothing (bundle (a, b, c))
   where spin seq (diffd, wrbyte, ack) = (traceShowId seq', out)
           where (seq', start, rdbit, stop) = flank seq diffd
-                out = (0, (start, False, False, False), sda)
+                out = (0, (start, {-False-}stop, False, False), sda)
                 sda = 0
 
 -- ** Tests
 
 bsTest' = bitSlave diffd 0 (pure False)
   where diffd = sda'scl' (fromList sda') (fromList scl')
-        --sda' = x4 $ 1:0:1:1:1:1:1:1:1:1:1:1:[]
         sda' = 1:s:s:s:s:s:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:1:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:1:1:1:1:1:1:1:1:0:0:0:0:0:p:p:p: []
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
         scl' = 1:1:1:1:0:0:0:0:scl'
