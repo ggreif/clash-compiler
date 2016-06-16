@@ -4,6 +4,7 @@
 -- - 7bit address space
 -- - missing debouncer
 -- - one baud rate only
+-- - NACK responses missing
 
 -- * Preliminaries
 
