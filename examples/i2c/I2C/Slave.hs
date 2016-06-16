@@ -106,3 +106,28 @@ scl8 = moore up (<4) (0 :: Unsigned 3) (pure ())
 
 i2c :: I2C state => state -> Signal Bit -> Signal Bit -> Signal Bool
 i2c init sda scl = mealy protocol init (sda'scl' sda scl)
+
+
+-- * This comes from another concept study
+
+-- See https://github.com/ggreif/clash-ground/blob/master/I2CServant.hs
+
+bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
+         -> Signal (Unsigned 8) -- byte to write
+         -> Signal Bool -- ACK-out
+         -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
+bitSlave = undefined
+
+-- ** Example: PCA9552
+
+--type PCA9552 = Address 0b1100000 (ReadOne Done)
+
+type StateX = (Unsigned 8, Vec 8 (Unsigned 8))
+
+pca9552 :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
+        -> Signal Bit                        -- SDA-out
+pca9552 i = o
+  where (read, conds, o) = unbundle $ bitSlave i write ack
+        (ack, write) = mealyB step (0, CLaSH.Prelude.repeat 0b01010101) (read, conds)
+        step :: StateX -> (Unsigned 8, (Bool, Bool, Bool, Bool)) -> (StateX, (Bool, Unsigned 8))
+        step s i = (s, (True, 0)) -- FIXME
