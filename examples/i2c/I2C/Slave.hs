@@ -117,8 +117,10 @@ i2c init sda scl = mealy protocol init (sda'scl' sda scl)
 
 -- See https://github.com/ggreif/clash-ground/blob/master/I2CServant.hs
 
+data ToSend = Ack | Byte (Unsigned 8) (Unsigned 3)
+
 bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
-         -> Signal (Unsigned 8) -- byte to write
+         -> Signal (Maybe ToSend) -- byte/ack to write
          -> Signal Bool -- ACK-out
          -> Signal (Unsigned 8, (Bool, Bool, Bool, Bool), Bit) -- byte read, (START, ACK, NACK, ReSTART), SDA-out
 bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
@@ -132,7 +134,7 @@ bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
 
 -- ** Tests
 
-bsTest' = bitSlave diffd 0 (pure False)
+bsTest' = bitSlave diffd (pure Nothing) (pure False)
   where diffd = sda'scl' (fromList sda') (fromList scl')
         sda' = 1:s:s:s:s:0b10011001::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
@@ -169,5 +171,5 @@ pca9552 :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
 pca9552 i = o
   where (read, conds, o) = unbundle $ bitSlave i write ack
         (ack, write) = mealyB step (0, CLaSH.Prelude.repeat 0b01010101) (read, conds)
-        step :: StateX -> (Unsigned 8, (Bool, Bool, Bool, Bool)) -> (StateX, (Bool, Unsigned 8))
-        step s i = (s, (True, 0)) -- FIXME
+        step :: StateX -> (Unsigned 8, (Bool, Bool, Bool, Bool)) -> (StateX, (Bool, Maybe ToSend))
+        step s i = (s, (True, Nothing)) -- FIXME
