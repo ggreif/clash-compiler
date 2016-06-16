@@ -46,6 +46,7 @@ pattern ACK = (UP, LOW)
 flank :: Maybe (Unsigned 4) -> ((Bit, Bool), (Bit, Bool)) -> (Maybe (Unsigned 4), Bool, Maybe Bit, Bool)
 flank Nothing START = (Just 0, True, Nothing, False)
 flank Nothing STOP = (Nothing, False, Nothing, True)
+flank (Just n) STOP = (Nothing, False, Nothing, n == 1)
 --flank Nothing ACK = (Just 0, False, Nothing, False) -- sense this only when sending (after bit #7)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
 flank (Just 8) (_, DOWN) = (Nothing, False, Nothing, False)
@@ -145,14 +146,14 @@ bsTest' = out
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
          0b01010101::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
-         0b00011100::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::0:0:0:0:0:p:p:p: []
+         0b00011100::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::a:::::::::::::::0:0:0:0:0:p:p:p:p:[]
         --     ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^         ^^^^^^^
         scl' = 1:1:1:1:0:0:0:0:scl'
         s = 0
         p = 1
         a = 1 -- ack await
 
-bsTest = mapM_ print (sampleN 232 bsTest')
+bsTest = mapM_ print (sampleN 230 bsTest')
 
 infixr 5 :::::::::::::::
 --pattern (:::::::::::::::) :: Eq a => a -> [a] -> [a]
