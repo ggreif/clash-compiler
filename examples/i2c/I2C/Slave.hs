@@ -124,10 +124,10 @@ bitSlave :: Signal ((Bit, Bool), (Bit, Bool)) -- SDA, SCL + flanks
 bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8) (bundle (a, b, c))
   where spin (seq, byte) (diffd, wrbyte, ack) = ((seq', byte'), out)
           where (seq', start, rdbit, stop) = flank seq diffd
-                out = (byte', (start, ack seq seq'{-fixme-}, False, stop{-fixme-}), sda)
-                sda = if ack seq seq' then 0 else 1 -- HACK
-                ack (Just 8) Nothing = True
-                ack _ _ = False
+                out = (byte', (start, ackGen seq seq'{-fixme-}, False, stop{-fixme-}), sda)
+                sda = if ackGen seq seq' then 0 else 1 -- HACK
+                ackGen (Just 8) Nothing = True
+                ackGen _ _ = False
                 byte' = case (rdbit, seq) of (Nothing, Nothing) -> 0; (Nothing, _) -> byte; (Just b, _) -> unpack (resize (pack (byte, b)))
 
 -- ** Tests
