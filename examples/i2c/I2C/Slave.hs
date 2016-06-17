@@ -45,8 +45,7 @@ pattern ACK = (UP, LOW)
 --                              v    v       v    v
 flank :: Maybe (Unsigned 4) -> ((Bit, Bool), (Bit, Bool)) -> (Maybe (Unsigned 4), Bool, Maybe Bit, Bool)
 flank Nothing START = (Just 0, True, Nothing, False)
-flank Nothing STOP = (Nothing, False, Nothing, True)
-flank (Just n) STOP = (Nothing, False, Nothing, n == 1)
+flank seq STOP = (Nothing, False, Nothing, case seq of Nothing -> True; Just n -> n == 1)
 --flank Nothing ACK = (Just 0, False, Nothing, False) -- sense this only when sending (after bit #7)
 flank (Just n) ((sda, _), UP) = (Just $ n+1, False, Just sda, False)
 flank (Just 8) (_, DOWN) = (Nothing, False, Nothing, False)
@@ -133,10 +132,13 @@ bitSlave a b c = mealy spin (Nothing, 0 :: Unsigned 8, Nothing) (bundle (a, b, c
                 ackGen _ _ = False
                 byte' = case (rdbit, seq) of (Nothing, Nothing) -> 0; (Nothing, _) -> byte; (Just b, _) -> unpack (resize (pack (byte, b)))
                 send = if sendAck then Just Ack else Nothing
-        spin (Nothing, _, Just Ack) (_, _, _) = ((Just 1, 0, Just Ack), (0, (False, False, False, False), 0))
-        spin (Just 1, _, Just Ack) ((_, UP), _, _) = ((Just 0, 0, Just Ack), (0, (False, False, False, False), 0))
-        spin (Just 0, _, Just Ack) ((_, DOWN), _, _) = ((Just 0, 0, Nothing), (0, (False, False, False, False), 0))
-        spin (seq@Just{}, _, Just Ack) (flanks, _, _) = ((seq, 0, Just Ack), (0, (False, False, False, False), 0))
+        -- Writing
+        spin (Nothing, _, ack@(Just Ack)) (_, _, _) = ((Just 1, 0, ack), (0, (False, False, False, False), 0))
+        spin (Just 1, _, ack@(Just Ack)) ((_, UP), _, _) = ((Just 0, 0, ack), (0, (False, False, False, False), 0))
+        spin (seq@(Just 0), _, Just Ack) ((_, DOWN), _, _) = ((seq, 0, Nothing), (0, (False, False, False, False), 0))
+        spin (seq@Just{}, _, ack@(Just Ack)) (flanks, _, _) = ((seq, 0, ack), (0, (False, False, False, False), 0))
+
+
 -- ** Tests
 
 bsTest' = out
